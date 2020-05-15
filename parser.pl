@@ -1,12 +1,35 @@
-regex_match(Regex, Hilera, Match) :- retract_all,
+regex_match(Regex, Hilera, Match) :- retract_all(),
 									 string_chars(Regex, RegexChars),
-									 parse_regex(RegexChars).
-									 %retractall(estado(X)).
+									 parse_regex(RegexChars),
+									 string_chars(Hilera, HileraChars),
+									 estado_inicial(X),
+									 accept_string(HileraChars, MatchChars, X),
+									 string_chars(Match, MatchChars).
+
+accept_string(_, [], Actual) :- estado_aceptacion(Actual), !.
+accept_string([], Match, Actual) :- findall(Y, transicion(Actual, '¬', Y), L),
+									%write(Actual + L + "]\n"),
+									explore_transitions([], '¬', Actual, L, Match).
+accept_string([X|Xr], Match, Actual) :- findall(Y, transicion(Actual, X, Y), L1),
+										findall(Z, transicion(Actual, '¬', Z), L2),
+										%write(Actual + X + L1 + "\n"),
+										%write(Actual + ¬ + L2 + "\n"),
+										(explore_transitions([X|Xr], X, Actual, L1, Match);
+										explore_transitions([X|Xr], '¬', Actual, L2, Match)).
+
+explore_transitions(_, _, Actual, _, []) :- estado_aceptacion(Actual), !.
+explore_transitions(Hilera, '¬', Actual, [Y|Yr], Match) :- accept_string(Hilera, Match, Y).
+explore_transitions(Hilera, '¬', Actual, [Y|Yr], Match) :- explore_transitions(Hilera, '¬', Actual, Yr, Match).
+explore_transitions([X|Xr], CaracTrans, Actual, [Y|Yr], [X|Match]) :- accept_string(Xr, Match, Y).
+explore_transitions([X|Xr], CaracTrans, Actual, [Y|Yr], [X|Match]) :- explore_transitions([X|Xr], X, Actual, Yr, Match).
+
 retract_all() :- retractall(estado(X)),
+				 retractall(estado_aceptacion(X)),
 				 retractall(ultimo_estado(X)),
 				 retractall(transicion(X, Y, Z)).
 
-parse_regex(Regex) :- assert(estado(0)), assert(estado(1)), assert(ultimo_estado(1)), parse(Regex, [[0,1]], [0, 0]).
+parse_regex(Regex) :- assert(estado(0)), assert(estado_inicial(0)), assert(estado(1)), assert(ultimo_estado(1)), 
+					  assert(estado_aceptacion(1)), parse(Regex, [[0,1]], [0, 0]).
 
 parse([], [[_, CierraEstado] | _], [UltimoEstado, _]) :- crear_transicion('¬', UltimoEstado, CierraEstado).
 parse([')','*'|Xr], [[AbreEstado, CierraEstado] | EstadosAfuera], [UltimoEstado, PenultimoEstado]):-
@@ -25,14 +48,15 @@ parse([X|Xr], EstadosAntesParen, [UltimoEstado, _]) :- nuevo_estado(Trans), crea
 crear_transicion(Caracter, EstadoInicial, EstadoFinal) :- transicion(EstadoInicial, Caracter, EstadoFinal).
 crear_transicion(Caracter, EstadoInicial, EstadoFinal) :- assert(transicion(EstadoInicial, Caracter, EstadoFinal)).
 
-% [[q0,nil,q1],[q1,X,q2],[q2,nil,q3],[q0,nil,q3],[q3,nil,q1]]
+% [[PrimerEstado,nil,Intermedio],[Intermedio,X,UltimoEstado],[UltimoEstado,nil,NuevoUltimoEstado],
+% [PrimerEstado,nil,NuevoUltimoEstado],[NuevoUltimoEstado,nil,Intermedio]]
 estrella(PrimerEstado, UltimoEstado, NuevoUltimoEstado) :- nuevo_estado(Intermedio),
 														   nuevo_estado(NuevoUltimoEstado),
 														   retract_trans(PrimerEstado, L),
 														   insert_trans(PrimerEstado, L, Intermedio),
 														   crear_transicion('¬', UltimoEstado, NuevoUltimoEstado),
 														   crear_transicion('¬', PrimerEstado, NuevoUltimoEstado),
-														   insert_trans(NuevoUltimoEstado, L, Intermedio).
+														   crear_transicion('¬', NuevoUltimoEstado, Intermedio).
 
 devolverse(EstadoFinal, [[E|_]|Xr], EstadoInicial) :- crear_transicion('¬', EstadoFinal, E), devolverse(EstadoFinal, Xr).
 
