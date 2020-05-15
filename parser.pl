@@ -1,8 +1,7 @@
-regex_match(Regex, Hilera, Match) :- string_chars(Regex, RegexChars),
+regex_match(Regex, Hilera, Match) :- retract_all,
+									 string_chars(Regex, RegexChars),
 									 parse_regex(RegexChars).
-									 %retractall(estado(X)),
-									 %retractall(ultimo_estado(X)),
-									 %retractall(transicion(X, Y, Z)).
+									 %retractall(estado(X)).
 retract_all() :- retractall(estado(X)),
 				 retractall(ultimo_estado(X)),
 				 retractall(transicion(X, Y, Z)).
