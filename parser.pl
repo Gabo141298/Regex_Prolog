@@ -9,21 +9,18 @@ regex_match(Regex, Hilera, Match) :- retract_all(),
 
 accept_string(_, [], Actual) :- estado_aceptacion(Actual), assert(estado_aceptado), !.
 accept_string([], Match, Actual) :- findall(Y, transicion(Actual, '¬', Y), L),
-									%write(Actual + L + "]\n"),
 									explore_transitions([], '¬', Actual, L, Match).
-accept_string([], [], _) :- !.
+accept_string([], [], _).
 accept_string([X|Xr], Match, Actual) :- findall(Y, transicion(Actual, X, Y), L1),
 										findall(Z, transicion(Actual, '¬', Z), L2),
-										%write(Actual + X + L1 + "\n"),
-										%write(Actual + ¬ + L2 + "\n"),
 										(explore_transitions([X|Xr], X, Actual, L1, Match);
 										explore_transitions([X|Xr], '¬', Actual, L2, Match)).
 accept_string([_|Xr], Match, _) :- estado_inicial(I), accept_string(Xr, Match, I).
 
 explore_transitions(_, _, Actual, _, []) :- estado_aceptacion(Actual), !.
-explore_transitions(Hilera, '¬', _, [Y|_], Match) :- accept_string(Hilera, Match, Y).
-explore_transitions(Hilera, '¬', Actual, [_|Yr], Match) :- explore_transitions(Hilera, '¬', Actual, Yr, Match).
-explore_transitions([X|Xr], _, _, [Y|_], [X|Match]) :- accept_string(Xr, Match, Y).
+explore_transitions(Hilera, '¬', _, [Y|_], Match) :- accept_string(Hilera, Match, Y), estado_aceptado.
+explore_transitions(Hilera, '¬', Actual, [_|Yr], Match) :- explore_transitions(Hilera, '¬', Actual, Yr, Match), !.
+explore_transitions([X|Xr], _, _, [Y|_], [X|Match]) :- accept_string(Xr, Match, Y), estado_aceptado.
 explore_transitions([X|Xr], _, Actual, [_|Yr], [X|Match]) :- explore_transitions([X|Xr], X, Actual, Yr, Match).
 
 retract_all() :- retractall(estado(_)),
