@@ -84,7 +84,6 @@ parse_regex(Regex) :- assert(estado(0)), assert(estado_inicial(0)), assert(estad
 parse([], [[_, CierraEstado] | _], [UltimoEstado, _]) :- crear_transicion('¬', UltimoEstado, CierraEstado).
 parse([')','*'|Xr], [[AbreEstado, CierraEstado] | EstadosAfuera], [UltimoEstado|_]):- 
 																	crear_transicion('¬', UltimoEstado, CierraEstado),
-																	%listing(transicion), write(AbreEstado + CierraEstado + NuevoUltimoEstado + "\n"),
 																	estrella(AbreEstado, CierraEstado, NuevoUltimoEstado), 
 																 	parse(Xr, EstadosAfuera, [NuevoUltimoEstado, CierraEstado]).
 parse([')'|Xr], [[_, CierraEstado]|EstadosAfuera], [UltimoEstado, _]) :- crear_transicion('¬', UltimoEstado, CierraEstado),
@@ -93,20 +92,13 @@ parse(['('|Xr], [[AbreEstado, CierraEstado] | EstadosAfuera], [UltimoEstado, _])
 													 crear_transicion('¬', AbreEstado, Nuevo),
 													 nuevo_estado(NuevoCierre), 
 													 parse(Xr, [[UltimoEstado, NuevoCierre], [AbreEstado, CierraEstado] | EstadosAfuera], [Nuevo, UltimoEstado]).
-parse(['|'|Xr], [[AbreEstado, CierraEstado] | EstadosAfuera], [UltimoEstado, _]) :- %write([AbreEstado, CierraEstado] + UltimoEstado + "\n"),
-																					nuevo_estado(Nuevo),
+parse(['|'|Xr], [[AbreEstado, CierraEstado] | EstadosAfuera], [UltimoEstado, _]) :- nuevo_estado(Nuevo),
 																					crear_transicion('¬', AbreEstado, Nuevo),
-																					%listing(transicion),
 																					crear_transicion('¬', UltimoEstado, CierraEstado),
 																					parse(Xr, [[AbreEstado, CierraEstado] | EstadosAfuera], [Nuevo, AbreEstado]).
-parse(['*'|Xr], EstadosAfuera, [UltimoEstado, PenultimoEstado]) :- %write("estrella sola: " + [UltimoEstado, PenultimoEstado]),
-																   %listing(transicion),
-																   estrella(PenultimoEstado, UltimoEstado, NuevoUltimoEstado),
-																   %listing(transicion),
+parse(['*'|Xr], EstadosAfuera, [UltimoEstado, PenultimoEstado]) :- estrella(PenultimoEstado, UltimoEstado, NuevoUltimoEstado),
 																   parse(Xr, EstadosAfuera, [NuevoUltimoEstado, UltimoEstado]).
-parse([X|Xr], EstadosAntesParen, [UltimoEstado, _]) :- %write("Carac: " + X + EstadosAntesParen + UltimoEstado + "\n"),
-													   nuevo_estado(Trans), crear_transicion(X, UltimoEstado, Trans), 
-													   %listing(transicion),
+parse([X|Xr], EstadosAntesParen, [UltimoEstado, _]) :- nuevo_estado(Trans), crear_transicion(X, UltimoEstado, Trans), 
 													   parse(Xr, EstadosAntesParen, [Trans, UltimoEstado]).
 
 % crear_transicion/3(+Caracter, +EstadoInicial, +EstadoFinal):
