@@ -1,3 +1,8 @@
+% Tarea 1 - Teoría de la computación
+% - Christian Asch
+% - Gabriel Gálvez
+% - Christian Rodríguez
+
 % regex_match/3(+ExpresiónRegular,+Hilera,-Match): 
 %				Busca una subhilera en la hilera donde se encuentre la expresión regular.
 %				Parámetros:
@@ -13,6 +18,7 @@ regex_match(Regex, Hilera, Match) :- retract_all(),
 									 %listing(transicion),
 									 string_chars(Hilera, HileraChars),
 									 estado_inicial(X),
+									 assert(hilera_actual(HileraChars)),
 									 accept_string(HileraChars, MatchChars, X, []),
 									 !, estado_aceptado,
 									 string_chars(Match, MatchChars).
@@ -41,9 +47,10 @@ accept_string([X|Xr], Match, Actual, RecorridosNil) :- findall(Y, transicion(Act
 										findall(Z, transicion(Actual, '¬', Z), L2),
 										(explore_transitions([X|Xr], Actual, L1, Match);
 										explore_nil_transitions([X|Xr], Actual, L2, Match, RecorridosNil)).
-accept_string([_|Xr], Match, _, _) :- estado_inicial(I), accept_string(Xr, Match, I, []), !.
+accept_string([X|Xr], Match, _, _) :- hilera_actual([X|Xr]), retract(hilera_actual([X|Xr])), assert(hilera_actual(Xr)),
+									estado_inicial(I), accept_string(Xr, Match, I, []), !.
 
-% explore_transitions/6(+Hilera, +Actual, +Transiciones, -Match):
+% explore_transitions/4(+Hilera, +Actual, +Transiciones, -Match):
 %				Explora todas las transiciones que hay desde el estado actual del automata usando un caracter de transición en particular.
 %				Parámetros:
 %					Hilera: lista con caracteres de la hilera.
@@ -51,15 +58,13 @@ accept_string([_|Xr], Match, _, _) :- estado_inicial(I), accept_string(Xr, Match
 %					Transiciones: lista con los posibles estados a los que se puede pasar desde el estado actual, con el caracter de transición.
 %					Match: lista donde se devuelve la subhilera que es aceptada por el automata.
 explore_transitions(_, Actual, _, []) :- estado_aceptacion(Actual), !.
-explore_transitions([X|Xr], Actual, [Y|_], [X|Match]) :- %write([X|Xr] + Actual + Y + "\n"), 
-														accept_string(Xr, Match, Y, []), estado_aceptado.
-explore_transitions([X|Xr], Actual, [_|Yr], [X|Match]) :- explore_transitions([X|Xr], Actual, Yr, Match).
+explore_transitions([X|Xr], _, [Y|_], [X|Match]) :- accept_string(Xr, Match, Y, []), estado_aceptado.
+explore_transitions([X|Xr], Actual, [_|Yr], [X|Match]) :- explore_transitions([X|Xr], Actual, Yr, Match), estado_aceptado.
 
 explore_nil_transitions(_, Actual, _, [], _) :- estado_aceptacion(Actual), !.
-explore_nil_transitions(Hilera, Actual, [Y|_], Match, RecorridosNil) :- %write(Hilera + Actual + Y + RecorridosNil + "nil\n"), 
-																		\+member(Y, RecorridosNil), 
-																		accept_string(Hilera, Match, Y, [Y|RecorridosNil]), estado_aceptado.
-explore_nil_transitions(Hilera, Actual, [_|Yr], Match, RecorridosNil) :- explore_nil_transitions(Hilera, Actual, Yr, Match, RecorridosNil).
+explore_nil_transitions(Hilera, _, [Y|_], Match, RecorridosNil) :- \+member(Y, RecorridosNil), 
+																   accept_string(Hilera, Match, Y, [Y|RecorridosNil]), estado_aceptado.
+explore_nil_transitions(Hilera, Actual, [_|Yr], Match, RecorridosNil) :- explore_nil_transitions(Hilera, Actual, Yr, Match, RecorridosNil), estado_aceptado.
 
 % parse_regex/1(+Regex):
 %				parsea la expresión regular, para generar las reglas para los estados y las transiciones.
