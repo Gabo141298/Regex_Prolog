@@ -15,11 +15,8 @@
 regex_match(Regex, Hilera, Match) :- retract_all(),
 									 string_chars(Regex, RegexChars),
 									 parse_regex(RegexChars),
-									 %listing(transicion),
 									 string_chars(Hilera, HileraChars),
-									 estado_inicial(X),
-									 assert(hilera_actual(HileraChars)),
-									 accept_string(HileraChars, MatchChars, X, []),
+									 search_string(HileraChars, MatchChars),
 									 !, estado_aceptado,
 									 string_chars(Match, MatchChars).
 
@@ -29,8 +26,16 @@ retract_all() :- retractall(estado(_)),
 				 retractall(estado_aceptacion(_)),
 				 retractall(ultimo_estado(_)),
 				 retractall(transicion(_, _, _)),
-				 retractall(estado_aceptado),
-				 retractall(hilera_actual(_)).
+				 retractall(estado_aceptado).
+
+% search_string(+Hilera, -Match):
+%				Función principal que recorre cada caracter de la hilera para encontrar la ocurrencia de la expresión regular.
+%				Parámetros:
+%					Hilera: lista con cada caracter de la hilera.
+%					Match: lista donde se devuelve la subhilera que es aceptada por el automata.
+search_string(Hilera, Match) :- estado_inicial(X),
+								accept_string(Hilera, Match, X, []).
+search_string([_|Xr], Match) :- search_string(Xr, Match).
 
 % accept_string/4(+Hilera, -Match, +Actual, +UltimosRecorridosConNil):
 %				Usa las reglas que forman al automata para verificar si el automata acepta a la hilera.
@@ -48,8 +53,6 @@ accept_string([X|Xr], Match, Actual, RecorridosNil) :- findall(Y, transicion(Act
 										findall(Z, transicion(Actual, '¬', Z), L2),
 										(explore_transitions([X|Xr], Actual, L1, Match);
 										explore_nil_transitions([X|Xr], Actual, L2, Match, RecorridosNil)).
-accept_string([X|Xr], Match, _, _) :- hilera_actual([X|Xr]), retract(hilera_actual([X|Xr])), assert(hilera_actual(Xr)),
-									estado_inicial(I), accept_string(Xr, Match, I, []), !.
 
 % explore_transitions/4(+Hilera, +Actual, +Transiciones, -Match):
 %				Explora todas las transiciones que hay desde el estado actual del automata usando un caracter de transición en particular.
