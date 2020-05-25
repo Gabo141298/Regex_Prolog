@@ -29,7 +29,8 @@ retract_all() :- retractall(estado(_)),
 				 retractall(estado_aceptacion(_)),
 				 retractall(ultimo_estado(_)),
 				 retractall(transicion(_, _, _)),
-				 retractall(estado_aceptado).
+				 retractall(estado_aceptado),
+				 retractall(hilera_actual(_)).
 
 % accept_string/4(+Hilera, -Match, +Actual, +UltimosRecorridosConNil):
 %				Usa las reglas que forman al automata para verificar si el automata acepta a la hilera.
